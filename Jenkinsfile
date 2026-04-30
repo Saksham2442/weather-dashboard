@@ -11,10 +11,10 @@ pipeline {
             }
         }
         stage('Health Check') {
-            steps {
-                sh 'sleep 8 && curl -f http://localhost:3000 || exit 1'
-            }
-        }
+    steps {
+        sh 'sleep 8 && curl -f http://localhost:3000/ || exit 1'
+    }
+}
     }
     post {
         success { echo 'Deployment successful!' }
