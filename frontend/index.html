@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f0f4f8; }
+    h1 { color: #2d3748; }
+    input, button { padding: 10px; margin: 5px; border-radius: 6px; border: 1px solid #ccc; }
+    button { background: #4299e1; color: white; border: none; cursor: pointer; }
+    button:hover { background: #3182ce; }
+    #weather-result, #notes-list { background: white; padding: 15px; border-radius: 8px; margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <h1>🌦️ Weather Dashboard</h1>
+  <input id="city" type="text" placeholder="Enter city name" />
+  <button onclick="getWeather()">Get Weather</button>
+  <div id="weather-result"></div>
+
+  <h2>📝 My Notes</h2>
+  <input id="note" type="text" placeholder="Add a note for this city" />
+  <button onclick="saveNote()">Save Note</button>
+  <div id="notes-list"></div>
+
+  <script>
+    let currentCity = '';
+
+    async function getWeather() {
+      currentCity = document.getElementById('city').value;
+      const res = await fetch(`/weather/${currentCity}`);
+      const data = await res.json();
+      if (data.error) {
+        document.getElementById('weather-result').innerHTML = `<p style="color:red">${data.error}</p>`;
+        return;
+      }
+      document.getElementById('weather-result').innerHTML = `
+        <h3>${data.name}, ${data.sys.country}</h3>
+        <p>🌡️ Temp: ${data.main.temp}°C</p>
+        <p>💧 Humidity: ${data.main.humidity}%</p>
+        <p>🌤️ ${data.weather[0].description}</p>
+      `;
+      loadNotes();
+    }
+
+    async function saveNote() {
+      const note = document.getElementById('note').value;
+      await fetch('/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city: currentCity, note })
+      });
+      document.getElementById('note').value = '';
+      loadNotes();
+    }
+
+    async function loadNotes() {
+      const res = await fetch(`/notes/${currentCity}`);
+      const notes = await res.json();
+      document.getElementById('notes-list').innerHTML = notes.length
+        ? notes.map(n => `<p>📌 ${n.note} <small>(${new Date(n.date).toLocaleDateString()})</small></p>`).join('')
+        : '<p>No notes yet.</p>';
+    }
+  </script>
+</body>
+</html>
