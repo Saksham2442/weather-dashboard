@@ -4,11 +4,6 @@ pipeline {
         WEATHER_API_KEY = credentials('weather-api-key')
     }
     stages {
-        stage('Clone') {
-            steps {
-                git branch: 'main', url: 'https://github.com/YOUR_GITHUB_USERNAME/weather-dashboard.git'
-            }
-        }
         stage('Build & Deploy') {
             steps {
                 sh 'docker compose down || true'
