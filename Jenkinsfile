@@ -1,38 +1,23 @@
 pipeline {
     agent any
     environment {
-        DOCKERHUB_CREDS = credentials('dockerhub-creds')
-        IMAGE_NAME = "punkk/weather-dashboard"
-        KUBECONFIG = "/var/lib/jenkins/.kube/config"
+        WEATHER_API_KEY = credentials('weather-api-key')
     }
     stages {
-        stage('Build Docker Image') {
+        stage('Build & Deploy') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:latest ./backend"
+                sh 'docker compose down || true'
+                sh 'docker compose up -d --build'
             }
         }
-        stage('Push to Docker Hub') {
-            steps {
-                sh "echo ${DOCKERHUB_CREDS_PSW} | docker login -u ${DOCKERHUB_CREDS_USR} --password-stdin"
-                sh "docker push ${IMAGE_NAME}:latest"
-            }
-        }
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh "sudo kubectl apply -f k8s/mongo-deployment.yaml"
-                sh "sudo kubectl apply -f k8s/app-deployment.yaml"
-                sh "sudo kubectl rollout restart deployment/weather-app"
-            }
-        }
-        stage('Verify Deployment') {
-            steps {
-                sh "sudo kubectl get pods"
-                sh "sudo kubectl get services"
-            }
-        }
+        stage('Health Check') {
+    steps {
+        sh 'sleep 8 && curl -f http://localhost:3000/ || exit 1'
+    }
+}
     }
     post {
-        success { echo 'Deployed to Kubernetes successfully!' }
+        success { echo 'Deployment successful!' }
         failure  { echo 'Deployment failed. Check logs.' }
     }
 }
